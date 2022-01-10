@@ -17,8 +17,12 @@ def viewtasks():
 @app.route('/deletetasks')
 def deletetasks():
    id = request.args.get('id')
-   client.test.todos.delete_one({"_id": ObjectId(id)})
-   return '200'
+   result = client.test.todos.delete_one({"_id": ObjectId(id)})
+   print(result.deleted_count)
+   if result.deleted_count:
+      return '200'
+   else:
+      return '403'
 
 @app.route('/addtask', methods=['GET'])
 def addtask():
@@ -43,7 +47,8 @@ def undo_complete():
 def edit_name():
    id = request.args.get('id')
    name= request.args.get('name')
-   client.test.todos.update_one({"_id": ObjectId(id)}, {"$set":{"name": "name"}})
+   result = client.test.todos.update_one({"_id": ObjectId(id)}, {"$set":{"name": name}})
+   print('modified count',result.modified_count)
    return '200'
 
 @app.route('/filter', methods=['GET'])
