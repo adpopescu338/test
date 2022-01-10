@@ -5,13 +5,13 @@ export const Todos= createContext();
 
 const TodosWrapper = ({ children }) => {
    const [ data, setData ] = useState();
-   
    const getData = async () => setData(await getTodos());
 
-	useEffect(async () => {
-		await getData()
+	useEffect(() => {
+		getData()
 	}, []);
 	return <Todos.Provider value={{ data, refresh: getData }}>{children}</Todos.Provider>;
 };
+
 export default TodosWrapper;
 export const useData = () => useContext(Todos);

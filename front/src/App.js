@@ -4,12 +4,14 @@ import List from './components/List'
 import './App.css'
 import Navbar from './components/Navbar'
 
+
 function App() {
    return (
 				<>
 					<Navbar />
 
-					<Wrapper>
+         <Wrapper>
+            
 						<List />
 					</Wrapper>
 				</>
@@ -17,3 +19,4 @@ function App() {
 }
 
 export default App;
+
