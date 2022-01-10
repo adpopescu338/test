@@ -6,8 +6,11 @@ app = Flask('__name__')
 from flask_cors import CORS
 from pymongo import MongoClient
 from datetime import datetime
+from dotenv import load_dotenv
+import os
 
-client = MongoClient("mongodb+srv://Alex:jyeLQYBW8EUnIX38@Test0.ihhvy.mongodb.net")
+load_dotenv()
+client = MongoClient(os.getenv("MONGO_URL"))
 CORS(app)
 
 @app.route('/viewtasks')
