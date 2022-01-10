@@ -1,104 +1,73 @@
-import sqlite3
-from sqlite3 import Error
+from bson.json_util import dumps
+from bson import ObjectId
 import json
 from flask import Flask,request
 app = Flask('__name__')
 from flask_cors import CORS
+from pymongo import MongoClient
+from datetime import datetime
+
+client = MongoClient("mongodb+srv://Alex:jyeLQYBW8EUnIX38@Test0.ihhvy.mongodb.net")
 CORS(app)
-# http://127.0.0.1:5001/viewtasks
-# http://127.0.0.1:5001/addtask?task=update github project&user=gmavridakis
-# http://127.0.0.1:5001/deletetasks
 
-# create a database connection
-def createConnection():
-    """ create a database connection to the SQLite database"""
-    conn = None
-    try:
-        database = r"..\db\tasks-collection.db"
-        conn = sqlite3.connect(database)
-    except Error as e:
-        print(e)
-    return conn
-
-
-# DBO - START
-def getTasks(conn):
-    """
-    Query all rows in the tasks table
-    :param conn: the Connection object
-    :return:
-    """
-    query = "SELECT * FROM tasks"
-    cur = conn.cursor()
-    cur.execute(query)
-    rows = cur.fetchall()
-    print(query)
-    return json.dumps(rows)
-
-def deleteTasks(conn):
-    """
-    Query all rows in the tasks table
-    :param conn: the Connection object
-    :return:
-    """
-    query = "DELETE FROM tasks"
-    cur = conn.cursor()
-    cur.execute(query)
-    conn.commit()
-    print(query)
-
-def addTask(conn,task,user):
-    """
-    Query all rows in the tasks table
-    :param conn: the Connection object
-    :return:
-    """
-    
-    query = "INSERT INTO tasks(task,user) VALUES('" +task +"','" +user +"');"
-    cur = conn.cursor()
-    cur.execute(query)
-    conn.commit()
-    print(query)
-    
-# DBO - END
-
-# define APIs - START
-@app.route('/')
 @app.route('/viewtasks')
-def viewtasks():
-    # baseUrl/viewtasks
-    conn = createConnection()
-    res = getTasks(conn)    
-    return res
+def viewtasks(): 
+    return dumps(client.test.todos.find())
 
 @app.route('/deletetasks')
 def deletetasks():
-    # baseUrl/deletetasks
-    conn = createConnection()
-    deleteTasks(conn)
-    return '200'
+   id = request.args.get('id')
+   client.test.todos.delete_one({"_id": ObjectId(id)})
+   return '200'
 
 @app.route('/addtask', methods=['GET'])
 def addtask():
-    # baseUrl/addtask?task=...&user=...
-    task = request.args.get('task')
-    user = request.args.get('user')
-    conn = createConnection()
-    if task and user :
-        addTask(conn,task,user)
-        return '200'
-    else :
-        return '500'
+   name= request.args.get('name')
+   client.test.todos.insert_one({"name":name, "created_at": datetime.now(), "status":'Uncompleted'})
+   return '200'
 
-# define APIs - END
+@app.route('/complete', methods=['GET'])
+def complete():
+   id = request.args.get('id')
+   client.test.todos.update_one({"_id": ObjectId(id)}, {"$set":{"status": "Completed", "completed_at": datetime.now()}})
+   return '200'
+
+@app.route('/undo-complete', methods=['GET'])
+def undo_complete():
+   id = request.args.get('id')
+   client.test.todos.update_one({"_id": ObjectId(id)}, {"$set":{"status": "Uncompleted", "completed_at" : ""}})
+   return '200'
+
+
+@app.route('/edit_name', methods=['GET'])
+def edit_name():
+   id = request.args.get('id')
+   name= request.args.get('name')
+   client.test.todos.update_one({"_id": ObjectId(id)}, {"$set":{"name": "name"}})
+   return '200'
+
+@app.route('/filter', methods=['GET'])
+def filter():
+   created_at = request.args.get('created_at')
+   completed_at= request.args.get('endDate')
+   status = request.args.get('status')
+   filters = {}
+   if(created_at):
+    filters['created_at'] =  created_at
+   if(completed_at):
+     filters['completed_at'] = completed_at
+   if(status):
+      filters["status"] = status
+   return dumps(client.test.todos.find(filters))
+
 
 
 def main():
     try:
         # start web server
         app.run(port='5001')
-    except Error as e:
-        print(e)
+    except:
+        print('something went wrong')
 
 if __name__ == '__main__':
     main()
